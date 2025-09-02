@@ -3,10 +3,12 @@ export class QueensGame {
     console.log("creating game", templateInfo);
     this.template = templateInfo.template;
     this.gameNumber = templateInfo.gameNumber;
+    this.history = [];
+    this.addToHistory(this.template);
   }
 
   getBoard() {
-    return this.template;
+    return this.history[this.history.length - 1];
   }
 
   getColorSquares(color) {
@@ -61,72 +63,102 @@ export class QueensGame {
     return rowAndColumnSquares;
   }
 
+  getHistory() {
+    return this.history;
+  }
+
+  addToHistory(snapshot) {
+    this.history.push(snapshot);
+  }
+
+  removeFromHistory() {
+    this.history.pop();
+  }
+
   placeX(row, col) {
-    this.template[row][col] = this.template[row][col][0] + "X";
+    if (!this.getBoard()[row][col].includes("C")) {
+      const newBoard = structuredClone(this.getBoard());
+      newBoard[row][col] = newBoard[row][col][0] + "X";
+      this.addToHistory(newBoard);
+    }
   }
 
   placeCrown(row, col) {
-    const info = this.template[row][col];
+    const info = this.getBoard()[row][col];
+    console.log("info in placeCrown", info);
     if (!info.includes("X")) return;
-    this.template[row][col] = info[0] + "C";
-    this.fillAroundCrown(row, col);
+    const newBoard = structuredClone(this.getBoard());
+    this.checkForConflictingCrown(row, col, newBoard);
+    console.log("newBoard in placeCrown", newBoard);
+    newBoard[row][col] = info[0] + "C";
+    this.fillAroundCrown(row, col, newBoard);
+    console.log("newBoard in placeCrown after fillAroundCrown", newBoard);
     const sameColorSquares = this.getColorSquares(info[0]);
     for (const [sameColorRow, sameColorCol] of sameColorSquares) {
-      this.template[sameColorRow][sameColorCol] =
-        this.template[sameColorRow][sameColorCol][0] + "X";
+      if (!newBoard[sameColorRow][sameColorCol].includes("C")) {
+        newBoard[sameColorRow][sameColorCol] =
+          newBoard[sameColorRow][sameColorCol] + "X";
+      }
     }
+    this.addToHistory(newBoard);
   }
 
   removeCrown(row, col) {
-    const info = this.template[row][col];
-    this.template[row][col] = info[0];
-    this.emptyAroundCrown(row, col);
+    this.removeFromHistory();
   }
 
-  checkIfCrown(row, col) {
+  removeX(row, col) {
+    const newBoard = structuredClone(this.getBoard());
+    newBoard[row][col] = newBoard[row][col].replace("X", "");
+    this.addToHistory(newBoard);
+  }
+
+  checkForConflictingCrown(row, col, board) {
     const squaresToCheck = this.getCornerSquares(row, col).concat(
       this.getRowAndColumnSquares(row, col)
     );
+    let rowToError;
+    let colToError;
     for (const [squareRow, squareCol] of squaresToCheck) {
-      if (this.template[squareRow][squareCol].includes("C")) {
+      if (board[squareRow][squareCol].includes("C")) {
+        console.log(`found a crown at row ${squareRow} col ${squareCol}`);
         // add error to all squares in the row or column
         if (row === squareRow) {
-          for (let i = 0; i < this.template[0].length; i++) {
-            this.template[row][i] = this.template[row][i].concat("Z");
-          }
+          rowToError = row;
+          break;
         } else if (col === squareCol) {
-          for (let i = 0; i < this.template.length; i++) {
-            this.template[i][col] = this.template[i][col].concat("Z");
-          }
+          colToError = col;
+          break;
         }
       }
     }
-    return false;
-  }
-
-  fillAroundCrown(row, col) {
-    const cornerSquares = this.getCornerSquares(row, col);
-    for (const [cornerRow, cornerCol] of cornerSquares) {
-      this.template[cornerRow][cornerCol] =
-        this.template[cornerRow][cornerCol][0] + "X";
+    if (rowToError !== undefined) {
+      for (let i = 0; i < this.template[0].length; i++) {
+        board[row][i] = board[row][i].concat("Z");
+      }
     }
-    const rowAndColumnSquares = this.getRowAndColumnSquares(row, col);
-    for (const [rowAndColumnRow, rowAndColumnCol] of rowAndColumnSquares) {
-      this.template[rowAndColumnRow][rowAndColumnCol] =
-        this.template[rowAndColumnRow][rowAndColumnCol][0] + "X";
+    if (colToError !== undefined) {
+      for (let i = 0; i < this.template.length; i++) {
+        board[i][col] = board[i][col].concat("Z");
+      }
     }
   }
 
-  emptyAroundCrown(row, col) {
+  fillAroundCrown(row, col, board) {
     const cornerSquares = this.getCornerSquares(row, col);
     for (const [cornerRow, cornerCol] of cornerSquares) {
-      this.template[cornerRow][cornerCol] =
-        this.template[cornerRow][cornerCol][0];
+      board[cornerRow][cornerCol] = board[cornerRow][cornerCol] + "X";
     }
     const rowAndColumnSquares = this.getRowAndColumnSquares(row, col);
     for (const [rowAndColumnRow, rowAndColumnCol] of rowAndColumnSquares) {
-      this.template[rowAndColumnRow][rowAndColumnCol] =
-        this.template[rowAndColumnRow][rowAndColumnCol][0];
+      board[rowAndColumnRow][rowAndColumnCol] =
+        board[rowAndColumnRow][rowAndColumnCol] + "X";
     }
+  }
+
+  checkForWin() {
+    const board = this.getBoard();
+    // check that every row contains exactly one crown and no square has "Z"
+    return board.every((row) => row.filter((square) => square.includes("C")).length === 1 && !row.some((square) => square.includes("Z")));
   }
 }

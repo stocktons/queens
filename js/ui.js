@@ -5,6 +5,9 @@ import { codesToColors, squareSize } from "../utils.js";
 class QueensGameUI {
   constructor() {
     this.game = null;
+    this.board = null;
+    this.title = null;
+    this.startButton = null;
   }
 
   createBoard() {
@@ -24,7 +27,8 @@ class QueensGameUI {
         square.classList.add("square");
         square.dataset.row = row;
         square.dataset.col = col;
-        square.style.backgroundColor = codesToColors[this.game.template[row][col][0]];
+        square.style.backgroundColor =
+          codesToColors[this.game.template[row][col][0]];
         square.addEventListener("click", this.handleSquareClick.bind(this));
         board.appendChild(square);
       }
@@ -36,16 +40,23 @@ class QueensGameUI {
   createTitle() {
     const title = document.createElement("h1");
     title.textContent = `Game ${this.game.gameNumber}`;
+    title.classList.add("title");
     document.body.appendChild(title);
+    return title;
   }
 
   getStartButton() {
     const startButton = document.getElementById("start-button");
     startButton.addEventListener("click", this.createGame.bind(this));
     document.body.appendChild(startButton);
+    this.startButton = startButton;
+    return startButton;
   }
 
   createGame() {
+    this.startButton.innerText = "Reset Game";
+    this.board?.remove();
+    this.title?.remove();
     const randomIndex = Math.floor(Math.random() * templates.length);
     this.game = new QueensGame(templates[randomIndex]);
     this.title = this.createTitle();
@@ -56,30 +67,45 @@ class QueensGameUI {
     const square = event.target;
     const row = parseInt(square.dataset.row);
     const col = parseInt(square.dataset.col);
-    if (this.game.template[row][col].includes("X")) {
+    if (this.game.getBoard()[row][col].includes("X")) {
       this.game.placeCrown(row, col);
-    } else if (this.game.template[row][col].includes("C")) {
+    } else if (this.game.getBoard()[row][col].includes("C")) {
       this.game.removeCrown(row, col);
+      this.game.removeX(row, col);
     } else {
       this.game.placeX(row, col);
     }
     this.updateHTMLBoard();
+    if (this.game.checkForWin()) {
+      console.log("you win!");
+      // remove all click listeners
+      const squares = this.board.querySelectorAll(".square");
+      squares.forEach((square) => {
+        square.removeEventListener("click", this.handleSquareClick);
+      });
+    }
   }
 
   updateHTMLBoard() {
     const updatedBoard = this.game.getBoard();
+    console.log("updatedBoard in updateHTMLBoard", updatedBoard);
     for (let i = 0; i < updatedBoard.length; i++) {
       for (let j = 0; j < updatedBoard[i].length; j++) {
-        const square = this.board.querySelector(`[data-row="${i}"][data-col="${j}"]`);
-        square.classList.remove("error");
+        const square = this.board.querySelector(
+          `[data-row="${i}"][data-col="${j}"]`
+        );
         if (updatedBoard[i][j].includes("C")) {
           square.innerHTML = "👑";
         } else if (updatedBoard[i][j].includes("X")) {
           square.innerHTML = "X";
-        } else if (updatedBoard[i][j].includes("Z")) {
-          square.classList.add("error");
         } else {
           square.innerHTML = "";
+        }
+        if (updatedBoard[i][j].includes("Z")) {
+          square.classList.add("error");
+        }
+        if (!updatedBoard[i][j].includes("Z")) {
+          square.classList.remove("error");
         }
       }
     }
