@@ -29,6 +29,9 @@ class QueensGameUI {
         square.dataset.col = col;
         square.style.backgroundColor =
           codesToColors[this.game.template[row][col][0]];
+        square.style.height = squareSize;
+        square.style.width = squareSize;
+        this.applyRegionBorders(square, row, col);
         square.addEventListener("click", this.handleSquareClick.bind(this));
         board.appendChild(square);
       }
@@ -97,7 +100,7 @@ class QueensGameUI {
         if (updatedBoard[i][j].includes("C")) {
           square.innerHTML = "👑";
         } else if (updatedBoard[i][j].includes("X") || updatedBoard[i][j].includes("x")) {
-          square.innerHTML = "X";
+          square.innerHTML = "&times";
         } else {
           square.innerHTML = "";
         }
@@ -108,6 +111,39 @@ class QueensGameUI {
           square.classList.remove("error");
         }
       }
+    }
+  }
+
+  applyRegionBorders(square, row, col) {
+    const currentColor = codesToColors[this.game.template[row][col][0]];
+    const shadows = [];
+
+    // Check each direction and add shadow if it's a region boundary
+    // Top border
+    if (row === 0 || codesToColors[this.game.template[row - 1][col][0]] !== currentColor) {
+      shadows.push("inset 0 1.2px 0 0 rgba(0, 0, 0, 0.5)");
+    }
+
+    // Bottom border
+    if (row === this.game.template.length - 1 ||
+        codesToColors[this.game.template[row + 1][col][0]] !== currentColor) {
+      shadows.push("inset 0 -1.2px 0 0 rgba(0, 0, 0, 0.5)");
+    }
+
+    // Left border
+    if (col === 0 || codesToColors[this.game.template[row][col - 1][0]] !== currentColor) {
+      shadows.push("inset 1.6px 0 0 0 rgba(0, 0, 0, 0.5)");
+    }
+
+    // Right border
+    if (col === this.game.template[row].length - 1 ||
+        codesToColors[this.game.template[row][col + 1][0]] !== currentColor) {
+      shadows.push("inset -1.6px 0 0 0 rgba(0, 0, 0, 0.5)");
+    }
+
+    // Apply all shadows at once
+    if (shadows.length > 0) {
+      square.style.boxShadow = shadows.join(", ");
     }
   }
 }

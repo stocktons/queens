@@ -1,27 +1,17 @@
-.board {
-  max-width: 600px;
-  margin: 20px auto;
-  gap: 0 !important;
-  column-gap: 0 !important;
-  row-gap: 0 !important;
-}
-
 .square {
   aspect-ratio: 1;
-  border: 1px solid #000;
+  border: 0.5px solid darkslategrey;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
-  width: 24px;
 }
 
 .error {
   background-image: repeating-linear-gradient(
     -45deg,
-    red 0px,
-    red 2px,
-    black 2px,
-    black 4px
+    tomato 2px,
+    tomato 4px,
+    transparent 4px,
+    transparent 8px
   );
 }

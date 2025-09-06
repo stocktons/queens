@@ -88,7 +88,7 @@ export class QueensGame {
   placeCrown(row, col) {
     const info = this.getBoard()[row][col];
     console.log("info in placeCrown", info);
-    if (!info.includes("x")) return;
+    if (!info.includes("x") && !info.includes("X")) return;
     const newBoard = structuredClone(this.getBoard());
     this.checkForConflictingCrown(row, col, newBoard);
     console.log("newBoard in placeCrown", newBoard);
@@ -100,7 +100,7 @@ export class QueensGame {
       if (!newBoard[sameColorRow][sameColorCol].includes("C")) {
         const squareCode = new Set(newBoard[sameColorRow][sameColorCol]);
         squareCode.add("X");
-        newBoard[sameColorRow][sameColorCol] = Array.from(squareCode).join("");;
+        newBoard[sameColorRow][sameColorCol] = Array.from(squareCode).join("");
       }
     }
     this.addToHistory(newBoard);
@@ -110,43 +110,43 @@ export class QueensGame {
     // find all the crowns that aren't this crown
     const otherCrowns = [];
     for (let i = 0; i < this.getBoard().length; i++) {
-        for (let j = 0; j < this.getBoard()[i].length; j++) {
-            if (i === row && j === col) continue;
-            if (this.getBoard()[i][j].includes("C")) {
-                otherCrowns.push([i, j]);
-            }
+      for (let j = 0; j < this.getBoard()[i].length; j++) {
+        if (i === row && j === col) continue;
+        if (this.getBoard()[i][j].includes("C")) {
+          otherCrowns.push([i, j]);
         }
+      }
     }
 
     // get all squares that should remain Xed due to other crowns
     const keepXs = new Set();
     for (const [crownRow, crownCol] of otherCrowns) {
-        const otherCrownSquares = this.getCornerSquares(crownRow, crownCol)
-            .concat(this.getRowAndColumnSquares(crownRow, crownCol))
-            .concat(this.getColorSquares(this.getBoard()[crownRow][crownCol][0]));
-        for (const [r, c] of otherCrownSquares) {
-            keepXs.add(`${r},${c}`);
-        }
+      const otherCrownSquares = this.getCornerSquares(crownRow, crownCol)
+        .concat(this.getRowAndColumnSquares(crownRow, crownCol))
+        .concat(this.getColorSquares(this.getBoard()[crownRow][crownCol][0]));
+      for (const [r, c] of otherCrownSquares) {
+        keepXs.add(`${r},${c}`);
+      }
     }
 
     // get all squares for this crown
     const thisCrownSquares = this.getCornerSquares(row, col)
-        .concat(this.getRowAndColumnSquares(row, col))
-        .concat(this.getColorSquares(this.getBoard()[row][col][0]));
+      .concat(this.getRowAndColumnSquares(row, col))
+      .concat(this.getColorSquares(this.getBoard()[row][col][0]));
 
     // remove Xs only from squares that belong to this crown but not to other crowns
     const newBoard = structuredClone(this.getBoard());
     for (const [r, c] of thisCrownSquares) {
-        if (!keepXs.has(`${r},${c}`)) {
-            newBoard[r][c] = newBoard[r][c].replace("X", "");
-        }
+      if (!keepXs.has(`${r},${c}`)) {
+        newBoard[r][c] = newBoard[r][c].replace("X", "");
+      }
     }
 
     // remove the crown itself
     newBoard[row][col] = newBoard[row][col].replace("C", "");
 
     this.addToHistory(newBoard);
-}
+  }
 
   removeX(row, col) {
     const newBoard = structuredClone(this.getBoard());
@@ -170,6 +170,16 @@ export class QueensGame {
         } else if (col === squareCol) {
           colToError = col;
           break;
+        } else {
+          // diagonals
+          if (!board[row][col].includes("Z")) {
+            board[row][col] = board[row][col].concat("Z");
+          }
+          if (!board[squareRow][squareCol].includes("Z")) {
+            board[squareRow][squareCol] =
+              board[squareRow][squareCol].concat("Z");
+          }
+          return;
         }
       }
     }
