@@ -78,7 +78,9 @@ export class QueensGame {
   placeX(row, col) {
     if (!this.getBoard()[row][col].includes("C")) {
       const newBoard = structuredClone(this.getBoard());
-      newBoard[row][col] = newBoard[row][col][0] + "X";
+      const squareCode = new Set(newBoard[row][col]);
+      squareCode.add("x");
+      newBoard[row][col] = Array.from(squareCode).join("");
       this.addToHistory(newBoard);
     }
   }
@@ -86,7 +88,7 @@ export class QueensGame {
   placeCrown(row, col) {
     const info = this.getBoard()[row][col];
     console.log("info in placeCrown", info);
-    if (!info.includes("X")) return;
+    if (!info.includes("x")) return;
     const newBoard = structuredClone(this.getBoard());
     this.checkForConflictingCrown(row, col, newBoard);
     console.log("newBoard in placeCrown", newBoard);
@@ -96,16 +98,55 @@ export class QueensGame {
     const sameColorSquares = this.getColorSquares(info[0]);
     for (const [sameColorRow, sameColorCol] of sameColorSquares) {
       if (!newBoard[sameColorRow][sameColorCol].includes("C")) {
-        newBoard[sameColorRow][sameColorCol] =
-          newBoard[sameColorRow][sameColorCol] + "X";
+        const squareCode = new Set(newBoard[sameColorRow][sameColorCol]);
+        squareCode.add("X");
+        newBoard[sameColorRow][sameColorCol] = Array.from(squareCode).join("");;
       }
     }
     this.addToHistory(newBoard);
   }
 
   removeCrown(row, col) {
-    this.removeFromHistory();
-  }
+    // find all the crowns that aren't this crown
+    const otherCrowns = [];
+    for (let i = 0; i < this.getBoard().length; i++) {
+        for (let j = 0; j < this.getBoard()[i].length; j++) {
+            if (i === row && j === col) continue;
+            if (this.getBoard()[i][j].includes("C")) {
+                otherCrowns.push([i, j]);
+            }
+        }
+    }
+
+    // get all squares that should remain Xed due to other crowns
+    const keepXs = new Set();
+    for (const [crownRow, crownCol] of otherCrowns) {
+        const otherCrownSquares = this.getCornerSquares(crownRow, crownCol)
+            .concat(this.getRowAndColumnSquares(crownRow, crownCol))
+            .concat(this.getColorSquares(this.getBoard()[crownRow][crownCol][0]));
+        for (const [r, c] of otherCrownSquares) {
+            keepXs.add(`${r},${c}`);
+        }
+    }
+
+    // get all squares for this crown
+    const thisCrownSquares = this.getCornerSquares(row, col)
+        .concat(this.getRowAndColumnSquares(row, col))
+        .concat(this.getColorSquares(this.getBoard()[row][col][0]));
+
+    // remove Xs only from squares that belong to this crown but not to other crowns
+    const newBoard = structuredClone(this.getBoard());
+    for (const [r, c] of thisCrownSquares) {
+        if (!keepXs.has(`${r},${c}`)) {
+            newBoard[r][c] = newBoard[r][c].replace("X", "");
+        }
+    }
+
+    // remove the crown itself
+    newBoard[row][col] = newBoard[row][col].replace("C", "");
+
+    this.addToHistory(newBoard);
+}
 
   removeX(row, col) {
     const newBoard = structuredClone(this.getBoard());
@@ -134,12 +175,16 @@ export class QueensGame {
     }
     if (rowToError !== undefined) {
       for (let i = 0; i < this.template[0].length; i++) {
-        board[row][i] = board[row][i].concat("Z");
+        if (!board[row][i].includes("Z")) {
+          board[row][i] = board[row][i].concat("Z");
+        }
       }
     }
     if (colToError !== undefined) {
       for (let i = 0; i < this.template.length; i++) {
-        board[i][col] = board[i][col].concat("Z");
+        if (!board[i][col].includes("Z")) {
+          board[i][col] = board[i][col].concat("Z");
+        }
       }
     }
   }
@@ -147,18 +192,25 @@ export class QueensGame {
   fillAroundCrown(row, col, board) {
     const cornerSquares = this.getCornerSquares(row, col);
     for (const [cornerRow, cornerCol] of cornerSquares) {
-      board[cornerRow][cornerCol] = board[cornerRow][cornerCol] + "X";
+      const squareCode = new Set(board[cornerRow][cornerCol]);
+      squareCode.add("X");
+      board[cornerRow][cornerCol] = Array.from(squareCode).join("");
     }
     const rowAndColumnSquares = this.getRowAndColumnSquares(row, col);
     for (const [rowAndColumnRow, rowAndColumnCol] of rowAndColumnSquares) {
-      board[rowAndColumnRow][rowAndColumnCol] =
-        board[rowAndColumnRow][rowAndColumnCol] + "X";
+      const squareCode = new Set(board[rowAndColumnRow][rowAndColumnCol]);
+      squareCode.add("X");
+      board[rowAndColumnRow][rowAndColumnCol] = Array.from(squareCode).join("");
     }
   }
 
   checkForWin() {
     const board = this.getBoard();
     // check that every row contains exactly one crown and no square has "Z"
-    return board.every((row) => row.filter((square) => square.includes("C")).length === 1 && !row.some((square) => square.includes("Z")));
+    return board.every(
+      (row) =>
+        row.filter((square) => square.includes("C")).length === 1 &&
+        !row.some((square) => square.includes("Z"))
+    );
   }
 }

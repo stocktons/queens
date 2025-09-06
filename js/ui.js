@@ -57,6 +57,7 @@ class QueensGameUI {
     this.startButton.innerText = "Reset Game";
     this.board?.remove();
     this.title?.remove();
+    this.game = null;
     const randomIndex = Math.floor(Math.random() * templates.length);
     this.game = new QueensGame(templates[randomIndex]);
     this.title = this.createTitle();
@@ -67,7 +68,7 @@ class QueensGameUI {
     const square = event.target;
     const row = parseInt(square.dataset.row);
     const col = parseInt(square.dataset.col);
-    if (this.game.getBoard()[row][col].includes("X")) {
+    if (this.game.getBoard()[row][col].includes("X") || this.game.getBoard()[row][col].includes("x")) {
       this.game.placeCrown(row, col);
     } else if (this.game.getBoard()[row][col].includes("C")) {
       this.game.removeCrown(row, col);
@@ -88,7 +89,6 @@ class QueensGameUI {
 
   updateHTMLBoard() {
     const updatedBoard = this.game.getBoard();
-    console.log("updatedBoard in updateHTMLBoard", updatedBoard);
     for (let i = 0; i < updatedBoard.length; i++) {
       for (let j = 0; j < updatedBoard[i].length; j++) {
         const square = this.board.querySelector(
@@ -96,7 +96,7 @@ class QueensGameUI {
         );
         if (updatedBoard[i][j].includes("C")) {
           square.innerHTML = "👑";
-        } else if (updatedBoard[i][j].includes("X")) {
+        } else if (updatedBoard[i][j].includes("X") || updatedBoard[i][j].includes("x")) {
           square.innerHTML = "X";
         } else {
           square.innerHTML = "";
